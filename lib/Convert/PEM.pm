@@ -1,4 +1,4 @@
-# $Id: PEM.pm,v 1.11 2001/04/22 06:55:22 btrott Exp $
+# $Id: PEM.pm,v 1.13 2001/04/22 08:04:40 btrott Exp $
 
 package Convert::PEM;
 use strict;
@@ -10,7 +10,7 @@ use Carp qw( croak );
 use Convert::PEM::CBC;
 
 use vars qw( $VERSION );
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 sub new {
     my $class = shift;
@@ -53,7 +53,7 @@ sub read {
     $blob = do { local $/; <FH> };
     close FH;
 
-    $param{Source} = $blob;
+    $param{Content} = $blob;
     $pem->decode(%param);
 }
 
@@ -76,8 +76,8 @@ sub write {
 sub decode {
     my $pem = shift;
     my %param = @_;
-    my $blob = $param{Source} or
-        return $pem->error("Source is required");
+    my $blob = $param{Content} or
+        return $pem->error("'Content' is required");
     chomp $blob;
 
     my $dec = $pem->explode($blob) or return;
@@ -281,7 +281,7 @@ the error message using the I<errstr> method (below).
 
 I<%args> can contain:
 
-=item * Source
+=item * Content
 
 The PEM contents.
 
@@ -334,7 +334,7 @@ the contents, the function returns I<undef>, and you should check
 the error message using the I<errstr> method (below).
 
 In addition to the arguments that can be passed to the I<decode>
-method (minus the I<Source> method), I<%args> can contain:
+method (minus the I<Content> method), I<%args> can contain:
 
 =over 4
 

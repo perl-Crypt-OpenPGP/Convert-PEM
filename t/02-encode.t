@@ -1,4 +1,4 @@
-# $Id: 02-encode.t,v 1.1 2001/04/22 07:22:42 btrott Exp $
+# $Id: 02-encode.t,v 1.2 2001/04/22 08:01:45 btrott Exp $
 
 use strict;
 
@@ -22,22 +22,22 @@ $obj = { TestObject => { int => 4 } };
 
 $blob = $pem->encode( Content => $obj);
 ok($blob);
-$obj2 = $pem->decode( Source => $blob );
+$obj2 = $pem->decode( Content => $blob );
 ok($obj2);
 ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
 
 $blob = $pem->encode( Content => $obj, Password => 'xx' );
 ok($blob);
-$obj2 = $pem->decode( Source => $blob );
+$obj2 = $pem->decode( Content => $blob );
 ok(!$obj2);
 ok($pem->errstr =~ /^Decryption failed/);
-$obj2 = $pem->decode( Source => $blob, Password => 'xx');
+$obj2 = $pem->decode( Content => $blob, Password => 'xx');
 ok($obj2);
 ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
 
 $obj->{TestObject}{int} = Math::BigInt->new("110982309809809850938509");
 $blob = $pem->encode( Content => $obj );
 ok($blob);
-$obj2 = $pem->decode( Source => $blob );
+$obj2 = $pem->decode( Content => $blob );
 ok($obj2);
 ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
