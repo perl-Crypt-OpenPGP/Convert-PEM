@@ -1,0 +1,34 @@
+$Id: README,v 1.2 2001/04/20 21:41:51 btrott Exp $
+
+This is Convert::PEM, a module implementing read/write access
+to ASN.1-encoded PEM files (with optional encryption).
+
+PREREQUISITES
+
+    * MIME::Base64
+    * Convert::ASN1 (0.10 or greater)
+    * Digest::MD5
+    * Crypt::DES
+
+INSTALLATION
+
+Convert::PEM installation is straightforward. If your cpan shell
+is set up, you should just be able to do
+
+    % perl -MCPAN -e 'install Convert::PEM'
+
+If you don't like that, you can download the distribution; the
+latest version on CPAN can be found in
+
+    ftp://ftp.cpan.org/pub/CPAN/authors/id/B/BT/BTROTT/
+
+Download it, unpack it, then build it as per the usual:
+
+    % perl Makefile.PL
+    % make && make test
+
+Then install it:
+
+    % make install
+
+Benjamin Trott / ben@rhumba.pair.com
