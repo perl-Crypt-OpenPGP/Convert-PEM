@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.2 2001/04/20 21:41:51 btrott Exp $
+# $Id: Makefile.PL,v 1.3 2001/09/15 03:50:42 btrott Exp $
 
 use ExtUtils::MakeMaker;
 
@@ -12,6 +12,6 @@ WriteMakefile(
         'MIME::Base64' => 0,
         'Convert::ASN1' => '0.10',
         'Digest::MD5' => 0,
-        'Crypt::DES' => 0,
+        'Crypt::DES_EDE3' => 0,
     },
 );

@@ -5,7 +5,7 @@ README
 ToDo
 lib/Convert/PEM.pm
 lib/Convert/PEM/CBC.pm
-lib/Crypt/DES_EDE3.pm
+lib/Convert/PEM/ErrorHandler.pm
 t/00-compile.t
 t/01-readwrite.t
 t/02-encode.t

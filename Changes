@@ -1,13 +1,24 @@
-$Id: Changes,v 1.5 2001/05/11 06:59:35 btrott Exp $
+$Id: Changes,v 1.8 2001/09/15 03:50:42 btrott Exp $
 
 Revision history for Convert::PEM
+
+0.06  2001.09.14
+    - Use Convert::PEM::ErrorHandler instead of defining error/errstr
+      methods for each class. This also lets us use error/errstr as
+      class methods.
+    - Added Macro param to constructor; this is useful when dealing
+      with an ASN.1 description that defines multiple ASN.1 macros,
+      and we want to decode/encode using a specific macro.
+    - Removed Crypt::DES_EDE3 from this distribution; it is now
+      packaged and distributed separately, and has been added as a
+      prereq for Convert::PEM.
 
 0.05  2001.05.11
     - Changed explode/implode so that they return/get list of headers
       in order in which they appear in the file. This fixes the bug
       where openssl-compatible PEM readers (like ssh-keygen in OpenSSH)
       could sometimes not read encrypted files (depending on the order
-      given to the headers by the has).
+      given to the headers by the hash).
 
 0.04  2001.04.22
     - Changed 'Source' param back to 'Content'.

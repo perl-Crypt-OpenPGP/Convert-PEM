@@ -1,10 +1,12 @@
-# $Id: CBC.pm,v 1.3 2001/04/20 20:07:11 btrott Exp $
+# $Id: CBC.pm,v 1.4 2001/08/07 00:29:02 btrott Exp $
 
 package Convert::PEM::CBC;
 use strict;
 
 use Carp qw( croak );
 use Digest::MD5 qw( md5 );
+use Convert::PEM::ErrorHandler;
+use base qw( Convert::PEM::ErrorHandler );
 
 sub new {
     my $class = shift;
@@ -38,9 +40,6 @@ sub init {
 }
 
 sub iv     { $_[0]->{iv} }
-
-sub error  { $_[0]->{error} = $_[1]; return }
-sub errstr { $_[0]->{error} }
 
 sub encrypt {
     my $cbc = shift;

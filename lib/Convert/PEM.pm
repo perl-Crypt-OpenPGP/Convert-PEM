@@ -1,4 +1,4 @@
-# $Id: PEM.pm,v 1.17 2001/05/11 06:58:33 btrott Exp $
+# $Id: PEM.pm,v 1.19 2001/08/07 00:40:20 btrott Exp $
 
 package Convert::PEM;
 use strict;
@@ -8,9 +8,11 @@ use Digest::MD5 qw( md5 );
 use Convert::ASN1;
 use Carp qw( croak );
 use Convert::PEM::CBC;
+use Convert::PEM::ErrorHandler;
+use base qw( Convert::PEM::ErrorHandler );
 
 use vars qw( $VERSION );
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 sub new {
     my $class = shift;
@@ -22,20 +24,18 @@ sub init {
     my $pem = shift;
     my %param = @_;
     unless (exists $param{ASN} && exists $param{Name}) {
-        croak __PACKAGE__, "->init: Name and ASN are required";
+        return (ref $pem)->error("init: Name and ASN are required");
     }
     else {
         $pem->{ASN} = $param{ASN};
         $pem->{Name} = $param{Name};
     }
+    $pem->{Macro} = $param{Macro};
     my $asn = $pem->{_asn} = Convert::ASN1->new;
     $asn->prepare( $pem->{ASN} ) or
-        return $pem->error("ASN prepare failed: $asn->{error}");
+        return (ref $pem)->error("ASN prepare failed: $asn->{error}");
     $pem;
 }
-
-sub error  { $_[0]->{error} = $_[1]; return }
-sub errstr { $_[0]->{error} }
 
 sub asn    { $_[0]->{_asn} }
 sub ASN    { $_[0]->{ASN} }
@@ -95,6 +95,10 @@ sub decode {
     }
 
     my $asn = $pem->asn;
+    if (my $macro = $pem->{Macro}) {
+        $asn = $asn->find($macro) or
+            return $pem->error("Can't find Macro $macro");
+    }
     my $obj = $asn->decode($buf) or
         return $pem->error("ASN decode failed: $asn->{error}");
 
@@ -106,6 +110,10 @@ sub encode {
     my %param = @_;
 
     my $asn = $pem->asn;
+    if (my $macro = $pem->{Macro}) {
+        $asn = $asn->find($macro) or
+            return $pem->error("Can't find Macro $macro");
+    }
     my $buf = $asn->encode( $param{Content} ) or
         return $pem->error("ASN encode failed: $asn->{error}");
 
@@ -261,12 +269,57 @@ The initialization vector (C<C814158661DC1449>) is chosen randomly.
 
 =head1 USAGE
 
-=head2 $pem = Convert::PEM->new( Name => $name, ASN => $asn )
+=head2 $pem = Convert::PEM->new( %arg )
 
 Constructs a new I<Convert::PEM> object designed to read/write an
-object of type I<$name>. Both I<Name> and I<ASN> are mandatory
-parameters. I<$asn> should be an ASN.1 description of the content
-to be either read or written (by the I<read> and I<write> methods).
+object of a specific type (given in I<%arg>, see below). Returns the
+new object on success, C<undef> on failure (see I<ERROR HANDLING> for
+details).
+
+I<%arg> can contain:
+
+=over 4
+
+=item * Name
+
+The name of the object; when decoding a PEM-encoded stream, the name
+in the encoding will be checked against the value of I<Name>.
+Similarly, when encoding an object, the value of I<Name> will be used
+as the name of the object in the PEM-encoded content. For example, given
+the string C<FOO BAR>, the output from I<encode> will start with a
+header like:
+
+    -----BEGIN FOO BAR-----
+
+I<Name> is a required argument.
+
+=item * ASN
+
+An ASN.1 description of the content to be either encoded or decoded.
+
+I<ASN> is a required argument.
+
+=item * Macro
+
+If your ASN.1 description (in the I<ASN> parameter) includes more than
+one ASN.1 macro definition, you will want to use the I<Macro> parameter
+to specify which definition to use when encoding/decoding objects.
+For example, if your ASN.1 description looks like this:
+
+    Foo ::= SEQUENCE {
+        x INTEGER,
+        bar Bar
+    }
+
+    Bar ::= INTEGER
+
+If you want to encode/decode a C<Foo> object, you will need to tell
+I<Convert::PEM> to use the C<Foo> macro definition by using the I<Macro>
+parameter and setting the value to C<Foo>.
+
+I<Macro> is an optional argument.
+
+=back
 
 =head2 $obj = $pem->decode(%args)
 
@@ -386,6 +439,26 @@ class to be used when decoding/encoding big integers:
 
     $pem->asn->configure( decode => { bigint => 'Math::Pari' },
                           encode => { bigint => 'Math::Pari' } );
+
+=head1 ERROR HANDLING
+
+If an error occurs in any of the above methods, the method will return
+C<undef>. You should then call the method I<errstr> to determine the
+source of the error:
+
+    $pem->errstr
+
+In the case that you do not yet have a I<Convert::PEM> object (that is,
+if an error occurs while creating a I<Convert::PEM> object), the error
+can be obtained as a class method:
+
+    Convert::PEM->errstr
+
+For example, if you try to decode an encrypted object, and you do not
+give a passphrase to decrypt the object:
+
+    my $obj = $pem->read( Filename => "encrypted.pem" )
+        or die "Decryption failed: ", $pem->errstr;
 
 =head1 AUTHOR & COPYRIGHTS
 
