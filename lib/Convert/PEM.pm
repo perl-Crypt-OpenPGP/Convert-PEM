@@ -1,4 +1,4 @@
-# $Id: PEM.pm,v 1.8 2001/04/20 21:41:23 btrott Exp $
+# $Id: PEM.pm,v 1.11 2001/04/22 06:55:22 btrott Exp $
 
 package Convert::PEM;
 use strict;
@@ -10,7 +10,7 @@ use Carp qw( croak );
 use Convert::PEM::CBC;
 
 use vars qw( $VERSION );
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 sub new {
     my $class = shift;
@@ -46,13 +46,38 @@ sub read {
     my %param = @_;
 
     my $blob;
-    unless ($blob = $param{Content}) {
-        local *FH;
-        open FH, $param{Filename} or
-            return $pem->error("Can't open $param{Filename}: $!");
-        $blob = do { local $/; <FH> };
-        close FH;
-    }
+    local *FH;
+    my $fname = delete $param{Filename};
+    open FH, $fname or
+        return $pem->error("Can't open $fname: $!");
+    $blob = do { local $/; <FH> };
+    close FH;
+
+    $param{Source} = $blob;
+    $pem->decode(%param);
+}
+
+sub write {
+    my $pem = shift;
+    my %param = @_;
+
+    my $fname = delete $param{Filename} or
+        return $pem->error("write: Filename is required");
+    my $blob = $pem->encode(%param);
+
+    local *FH;
+    open FH, ">$fname" or
+        return $pem->error("Can't open $fname: $!");
+    print FH $blob;
+    close FH;
+    $blob;
+}
+
+sub decode {
+    my $pem = shift;
+    my %param = @_;
+    my $blob = $param{Source} or
+        return $pem->error("Source is required");
     chomp $blob;
 
     my $dec = $pem->explode($blob) or return;
@@ -75,7 +100,7 @@ sub read {
     $obj;
 }
 
-sub write {
+sub encode {
     my $pem = shift;
     my %param = @_;
 
@@ -93,19 +118,9 @@ sub write {
         $headers{'DEK-Info'} = $info;
     }
 
-    $buf = $pem->implode( Object  => $pem->name,
-                          Headers => \%headers,
-                          Content => $buf );
-
-    if ($param{Filename}) {
-        local *FH;
-        open FH, ">$param{Filename}" or
-            return "Can't open $param{Filename}: $!";
-        print FH $buf;
-        close FH;
-    }
-
-    $buf;
+    $pem->implode( Object  => $pem->name,
+                   Headers => \%headers,
+                   Content => $buf );
 }
 
 sub explode {
@@ -152,7 +167,7 @@ sub decrypt {
     my($ctype, $iv) = split /,/, $param{Info};
     my $cmod = $CTYPES{$ctype} or
         return $pem->error("Unrecognized cipher: '$ctype'");
-    $iv =~ s!(..)! chr hex $1 !ge;
+    $iv = pack "H*", $iv;
     my $cbc = Convert::PEM::CBC->new(
                    Passphrase => $passphrase,
                    Cipher     => $cmod,
@@ -172,7 +187,7 @@ sub encrypt {
     my $cbc = Convert::PEM::CBC->new(
                     Passphrase => $param{Password},
                     Cipher     => $cmod );
-    (my $iv = $cbc->iv) =~ s!(.)! sprintf "%02X", ord $1 !gse;
+    my $iv = uc join '', unpack "H*", $cbc->iv;
     my $buf = $cbc->encrypt($param{Plaintext}) or
         return $pem->error("Encryption failed: " . $cbc->errstr);
     ($buf, "$ctype,$iv");
@@ -252,10 +267,13 @@ object of type I<$name>. Both I<Name> and I<ASN> are mandatory
 parameters. I<$asn> should be an ASN.1 description of the content
 to be either read or written (by the I<read> and I<write> methods).
 
-=head2 $obj = $pem->read(%args)
+=head2 $obj = $pem->decode(%args)
 
-Reads, decodes, and, optionally, decrypts a PEM file, returning
-the object as decoded by I<Convert::ASN1>.
+Decodes, and, optionally, decrypts a PEM file, returning the
+object as decoded by I<Convert::ASN1>. The difference between this
+method and I<read> is that I<read> reads the contents of a PEM file
+on disk; this method expects you to pass the PEM contents as an
+argument.
 
 If an error occurs while reading the file or decrypting/decoding
 the contents, the function returns I<undef>, and you should check
@@ -263,22 +281,9 @@ the error message using the I<errstr> method (below).
 
 I<%args> can contain:
 
-=over 4
+=item * Source
 
-=item * Filename
-
-The location of the PEM file that you wish to read.
-
-You must provide either this argument or I<Content>.
-
-=item * Content
-
-The PEM contents, formatted as would be read from I<Filename>, or
-as would be returned from the I<write> method.
-
-You must provide either this argument or I<Filename>. If you provide
-I<both> arguments, the content in I<Content> will be used, and the
-file will not be read.
+The PEM contents.
 
 =item * Password
 
@@ -290,7 +295,7 @@ it). Otherwise it's not necessary.
 
 =back
 
-=head2 $pem->write(%args)
+=head2 $blob = $pem->encode(%args)
 
 Constructs the contents for the PEM file from an object: ASN.1-encodes
 the object, optionally encrypts those contents.
@@ -299,14 +304,7 @@ Returns I<undef> on failure (encryption failure, file-writing failure,
 etc.); in this case you should check the error message using the
 I<errstr> method (below). On success returns the constructed PEM string.
 
-=over 4
-
-=item * Filename
-
-The location on disk where you'd like the PEM file written. This is
-an optional argument; since I<write> always returns the same string
-that would be written to the file, you can handle the file
-management yourself, if you like.
+I<%args> can contain:
 
 =item * Content
 
@@ -321,6 +319,49 @@ This argument is mandatory.
 
 A password used to encrypt the contents of the PEM file. This is an
 optional argument; if not provided the contents will be unencrypted.
+
+=back
+
+=head2 $obj = $pem->read(%args)
+
+Reads, decodes, and, optionally, decrypts a PEM file, returning
+the object as decoded by I<Convert::ASN1>. This is implemented
+as a wrapper around I<decode>, with the bonus of reading the PEM
+file from disk for you.
+
+If an error occurs while reading the file or decrypting/decoding
+the contents, the function returns I<undef>, and you should check
+the error message using the I<errstr> method (below).
+
+In addition to the arguments that can be passed to the I<decode>
+method (minus the I<Source> method), I<%args> can contain:
+
+=over 4
+
+=item * Filename
+
+The location of the PEM file that you wish to read.
+
+=back
+
+=head2 $pem->write(%args)
+
+Constructs the contents for the PEM file from an object: ASN.1-encodes
+the object, optionally encrypts those contents; then writes the file
+to disk. This is implemented as a wrapper around I<encode>, with the
+bonus of writing the file to disk for you.
+
+Returns I<undef> on failure (encryption failure, file-writing failure,
+etc.); in this case you should check the error message using the
+I<errstr> method (below). On success returns the constructed PEM string.
+
+In addition to the arguments for I<encode>, I<%args> can contain:
+
+=over 4
+
+=item * Filename
+
+The location on disk where you'd like the PEM file written.
 
 =back
 
