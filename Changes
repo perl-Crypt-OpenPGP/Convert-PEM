@@ -1,11 +1,18 @@
-$Id: Changes,v 1.4 2001/04/22 08:02:06 btrott Exp $
+$Id: Changes,v 1.5 2001/05/11 06:59:35 btrott Exp $
 
 Revision history for Convert::PEM
 
-0.04
+0.05  2001.05.11
+    - Changed explode/implode so that they return/get list of headers
+      in order in which they appear in the file. This fixes the bug
+      where openssl-compatible PEM readers (like ssh-keygen in OpenSSH)
+      could sometimes not read encrypted files (depending on the order
+      given to the headers by the has).
+
+0.04  2001.04.22
     - Changed 'Source' param back to 'Content'.
 
-0.03
+0.03  2001.04.21
     - Added test suite.
     - Added encode/decode methods, which are the encoding and decoding
       routines, broken out into separate methods. read and write are

@@ -1,4 +1,4 @@
-# $Id: PEM.pm,v 1.13 2001/04/22 08:04:40 btrott Exp $
+# $Id: PEM.pm,v 1.17 2001/05/11 06:58:33 btrott Exp $
 
 package Convert::PEM;
 use strict;
@@ -10,7 +10,7 @@ use Carp qw( croak );
 use Convert::PEM::CBC;
 
 use vars qw( $VERSION );
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 sub new {
     my $class = shift;
@@ -86,9 +86,10 @@ sub decode {
 
     my $head = $dec->{Headers};
     my $buf = $dec->{Content};
-    if (%$head && $head->{'Proc-Type'} eq '4,ENCRYPTED') {
+    my %headers = map { $_->[0] => $_->[1] } @$head;
+    if (%headers && $headers{'Proc-Type'} eq '4,ENCRYPTED') {
         $buf = $pem->decrypt( Ciphertext => $buf,
-                              Info       => $head->{'DEK-Info'},
+                              Info       => $headers{'DEK-Info'},
                               Password   => $param{Password} )
             or return;
     }
@@ -108,18 +109,18 @@ sub encode {
     my $buf = $asn->encode( $param{Content} ) or
         return $pem->error("ASN encode failed: $asn->{error}");
 
-    my(%headers);
+    my(@headers);
     if ($param{Password}) {
         my($info);
         ($buf, $info) = $pem->encrypt( Plaintext => $buf,
                                        Password  => $param{Password} )
             or return;
-        $headers{'Proc-Type'} = '4,ENCRYPTED';
-        $headers{'DEK-Info'} = $info;
+        push @headers, [ 'Proc-Type' => '4,ENCRYPTED' ];
+        push @headers, [ 'DEK-Info'  => $info ];
     }
 
     $pem->implode( Object  => $pem->name,
-                   Headers => \%headers,
+                   Headers => \@headers,
                    Content => $buf );
 }
 
@@ -130,17 +131,17 @@ sub explode {
         m:(-----BEGIN ([^\n\-]+)-----)\n(.*?\n\n)?(.+)(-----END .*?-----)$:s;
     my $buf = decode_base64($content);
 
-    my %headers;
+    my @headers;
     if ($headers) {
         for my $h ( split /\n/, $headers ) {
             my($k, $v) = split /:\s*/, $h, 2;
-            $headers{$k} = $v if $k;
+            push @headers, [ $k => $v ] if $k;
         }
     }
 
     { Content => $buf,
       Object  => $object,
-      Headers => \%headers }
+      Headers => \@headers }
 }
 
 sub implode {
@@ -151,8 +152,8 @@ sub implode {
     my $content = encode_base64( $param{Content}, '' );
     $content =~ s!(.{1,64})!$1\n!g;
     my $headers = join '',
-                  map { "$_: $param{Headers}{$_}\n" }
-                  keys %{ $param{Headers} };
+                  map { "$_->[0]: $_->[1]\n" }
+                  @{ $param{Headers} };
     $headers .= "\n" if $headers;
     "$head\n$headers$content$tail\n";
 }
@@ -281,6 +282,8 @@ the error message using the I<errstr> method (below).
 
 I<%args> can contain:
 
+=over 4
+
 =item * Content
 
 The PEM contents.
@@ -305,6 +308,8 @@ etc.); in this case you should check the error message using the
 I<errstr> method (below). On success returns the constructed PEM string.
 
 I<%args> can contain:
+
+=over 4
 
 =item * Content
 
