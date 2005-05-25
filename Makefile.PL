@@ -1,17 +1,24 @@
-# $Id: Makefile.PL,v 1.3 2001/09/15 03:50:42 btrott Exp $
+# $Id: Makefile.PL 1829 2005-05-25 21:51:40Z btrott $
 
-use ExtUtils::MakeMaker;
+use inc::Module::Install;
 
-WriteMakefile(
-    NAME => 'Convert::PEM',
-    DISTNAME => 'Convert-PEM',
-    VERSION_FROM => 'lib/Convert/PEM.pm',
-    AUTHOR => 'Benjamin Trott <ben@rhumba.pair.com>',
-    ABSTRACT => 'Read/write encrypted ASN.1 PEM files',
-    PREREQ_PM => {
-        'MIME::Base64' => 0,
-        'Convert::ASN1' => '0.10',
-        'Digest::MD5' => 0,
-        'Crypt::DES_EDE3' => 0,
-    },
-);
+name('Convert-PEM');
+abstract('Read/write encrypted ASN.1 PEM files');
+author('Benjamin Trott <ben+cpan@stupidfool.org>');
+version_from('lib/Convert/PEM.pm');
+license('perl');
+no_index(directory => 't');
+sign(1);
+
+include('ExtUtils::AutoInstall');
+
+requires('Class::ErrorHandler');
+requires('MIME::Base64');
+requires('Convert::ASN1' => '0.10');
+requires('Digest::MD5');
+requires('Crypt::DES_EDE3');
+
+auto_include();
+auto_install();
+
+&WriteAll;

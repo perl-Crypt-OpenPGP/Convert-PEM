@@ -1,18 +1,17 @@
-# $Id: PEM.pm,v 1.19 2001/08/07 00:40:20 btrott Exp $
+# $Id: PEM.pm 1829 2005-05-25 21:51:40Z btrott $
 
 package Convert::PEM;
 use strict;
+use base qw( Class::ErrorHandler );
 
 use MIME::Base64;
 use Digest::MD5 qw( md5 );
 use Convert::ASN1;
 use Carp qw( croak );
 use Convert::PEM::CBC;
-use Convert::PEM::ErrorHandler;
-use base qw( Convert::PEM::ErrorHandler );
 
 use vars qw( $VERSION );
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 sub new {
     my $class = shift;
@@ -81,8 +80,9 @@ sub decode {
     chomp $blob;
 
     my $dec = $pem->explode($blob) or return;
-    return $pem->error("Object $dec->{Object} does not match " . $pem->name)
-        unless $dec->{Object} eq $pem->name;
+    my $name = $param{Name} || $pem->name;
+    return $pem->error("Object $dec->{Object} does not match " . $name)
+        unless $dec->{Object} eq $name;
 
     my $head = $dec->{Headers};
     my $buf = $dec->{Content};
@@ -95,7 +95,7 @@ sub decode {
     }
 
     my $asn = $pem->asn;
-    if (my $macro = $pem->{Macro}) {
+    if (my $macro = ($param{Macro} || $pem->{Macro})) {
         $asn = $asn->find($macro) or
             return $pem->error("Can't find Macro $macro");
     }
@@ -110,7 +110,7 @@ sub encode {
     my %param = @_;
 
     my $asn = $pem->asn;
-    if (my $macro = $pem->{Macro}) {
+    if (my $macro = ($param{Macro} || $pem->{Macro})) {
         $asn = $asn->find($macro) or
             return $pem->error("Can't find Macro $macro");
     }
@@ -127,7 +127,7 @@ sub encode {
         push @headers, [ 'DEK-Info'  => $info ];
     }
 
-    $pem->implode( Object  => $pem->name,
+    $pem->implode( Object  => $param{Name} || $pem->name,
                    Headers => \@headers,
                    Content => $buf );
 }

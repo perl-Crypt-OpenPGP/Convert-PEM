@@ -1,6 +1,13 @@
-$Id: Changes,v 1.8 2001/09/15 03:50:42 btrott Exp $
+$Id: Changes 1832 2005-05-25 22:39:55Z btrott $
 
 Revision history for Convert::PEM
+
+0.07  2005.05.25
+    - Allow passing in Name and Macro parameters on encode and decode,
+      rather than just at initialization.
+    - Use Class::ErrorHandler instead of our own built-in error-handling
+      class.
+    - Switched to using Module::Install in Makefile.PL.
 
 0.06  2001.09.14
     - Use Convert::PEM::ErrorHandler instead of defining error/errstr

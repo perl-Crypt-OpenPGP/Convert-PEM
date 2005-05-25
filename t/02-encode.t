@@ -1,4 +1,4 @@
-# $Id: 02-encode.t,v 1.2 2001/04/22 08:01:45 btrott Exp $
+# $Id: 02-encode.t 89 2001-04-22 08:01:45Z btrott $
 
 use strict;
 

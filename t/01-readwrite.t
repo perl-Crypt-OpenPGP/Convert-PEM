@@ -1,4 +1,4 @@
-# $Id: 01-readwrite.t,v 1.1 2001/04/22 07:22:42 btrott Exp $
+# $Id: 01-readwrite.t 85 2001-04-22 07:22:42Z btrott $
 
 use strict;
 
