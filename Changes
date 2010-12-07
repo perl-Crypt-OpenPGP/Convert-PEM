@@ -1,6 +1,9 @@
 Revision history for Convert::PEM
 
 0.08  2010.12.06
+    - Altered explode() to canonicalize line endings to \n, handling
+      DOS (\r\n) and older mac (\r) line breaks cleanly. Thanks to Matt
+      Gramlich for the patch.
     - Removed sign() and auto_install() from Makefile.PL.
     - Removed magic svn keywords.
     - Converted test suite to Test::More.

@@ -135,6 +135,10 @@ sub encode {
 sub explode {
     my $pem = shift;
     my($message) = @_;
+
+    # Canonicalize line endings into "\n".
+    $message =~ s/\r\n|\n|\r/\n/g;
+
     my($head, $object, $headers, $content, $tail) = $message =~ 
         m:(-----BEGIN ([^\n\-]+)-----)\n(.*?\n\n)?(.+)(-----END .*?-----)$:s;
     my $buf = decode_base64($content);
