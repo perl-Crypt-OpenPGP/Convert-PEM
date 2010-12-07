@@ -1,12 +1,8 @@
-# $Id: 02-encode.t 89 2001-04-22 08:01:45Z btrott $
-
 use strict;
+use Test::More tests => 9;
 
-use Test;
 use Convert::PEM;
 use Math::BigInt;
-
-BEGIN { plan tests => 12 };
 
 my $pem = Convert::PEM->new(
            Name => 'TEST OBJECT',
@@ -15,29 +11,26 @@ my $pem = Convert::PEM->new(
                    int INTEGER
                }
     ));
-ok($pem);
+isa_ok $pem, 'Convert::PEM';
 
 my($obj, $obj2, $blob);
 $obj = { TestObject => { int => 4 } };
 
-$blob = $pem->encode( Content => $obj);
-ok($blob);
+$blob = $pem->encode( Content => $obj );
+ok $blob, 'encode gave us something';
 $obj2 = $pem->decode( Content => $blob );
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';
 
 $blob = $pem->encode( Content => $obj, Password => 'xx' );
-ok($blob);
+ok $blob, 'encode gave us something';
 $obj2 = $pem->decode( Content => $blob );
-ok(!$obj2);
-ok($pem->errstr =~ /^Decryption failed/);
-$obj2 = $pem->decode( Content => $blob, Password => 'xx');
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+ok !defined $obj2, 'decode fails on encrypted input';
+like $pem->errstr, qr/^Decryption failed/, 'errstr matches decrypt failed';
+$obj2 = $pem->decode( Content => $blob, Password => 'xx' );
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';
 
 $obj->{TestObject}{int} = Math::BigInt->new("110982309809809850938509");
 $blob = $pem->encode( Content => $obj );
-ok($blob);
+ok $blob, 'encode gave us something';
 $obj2 = $pem->decode( Content => $blob );
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';

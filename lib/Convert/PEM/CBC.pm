@@ -1,5 +1,3 @@
-# $Id: CBC.pm 1829 2005-05-25 21:51:40Z btrott $
-
 package Convert::PEM::CBC;
 use strict;
 
@@ -115,6 +113,7 @@ Convert::PEM::CBC - Cipher Block Chaining Mode implementation
                          Passphrase => 'foo'
            );
 
+    my $plaintext = 'foo bar baz';
     $cbc->encrypt($plaintext);
 
 =head1 DESCRIPTION

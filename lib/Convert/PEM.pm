@@ -1,7 +1,7 @@
-# $Id: PEM.pm 1829 2005-05-25 21:51:40Z btrott $
-
 package Convert::PEM;
 use strict;
+use 5.008_001;
+
 use base qw( Class::ErrorHandler );
 
 use MIME::Base64;
@@ -11,7 +11,7 @@ use Carp qw( croak );
 use Convert::PEM::CBC;
 
 use vars qw( $VERSION );
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 sub new {
     my $class = shift;
@@ -224,6 +224,9 @@ Convert::PEM - Read/write encrypted ASN.1 PEM files
                            priv_key INTEGER
                        }
                   ));
+
+    my $keyfile = 'private-key.pem';
+    my $pwd = 'foobar';
 
     my $pkey = $pem->read(
                    Filename => $keyfile,
@@ -460,13 +463,14 @@ give a passphrase to decrypt the object:
     my $obj = $pem->read( Filename => "encrypted.pem" )
         or die "Decryption failed: ", $pem->errstr;
 
+=head1 LICENSE
+
+Convert::PEM is free software; you may redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =head1 AUTHOR & COPYRIGHTS
 
-Benjamin Trott, ben@rhumba.pair.com
-
-Except where otherwise noted, Convert::PEM is Copyright 2001
-Benjamin Trott. All rights reserved. Convert::PEM is free
-software; you may redistribute it and/or modify it under
-the same terms as Perl itself.
+Except where otherwise noted, Convert::PEM is Copyright Benjamin
+Trott, cpan@stupidfool.org. All rights reserved.
 
 =cut

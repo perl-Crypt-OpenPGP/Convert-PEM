@@ -1,12 +1,9 @@
-# $Id: 01-readwrite.t 85 2001-04-22 07:22:42Z btrott $
-
 use strict;
+use Test::More tests => 16;
+use Test::Exception;
 
-use Test;
 use Convert::PEM;
 use Math::BigInt;
-
-BEGIN { plan tests => 15 };
 
 my $objfile = "./object.pem";
 
@@ -17,32 +14,29 @@ my $pem = Convert::PEM->new(
                    int INTEGER
                }
     ));
-ok($pem);
+isa_ok $pem, 'Convert::PEM';
 
 my($obj, $obj2);
 $obj = { TestObject => { int => 4 } };
 
-ok($pem->write( Filename => $objfile, Content => $obj));
-ok(-e $objfile);
-$obj2 = $pem->read( Filename => $objfile );
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+lives_ok { $pem->write( Filename => $objfile, Content => $obj) } 'can write';
+ok -e $objfile, 'output file exists';
+lives_ok { $obj2 = $pem->read( Filename => $objfile ) } 'can read';
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';
 unlink $objfile;
 
-ok($pem->write( Filename => $objfile, Content => $obj, Password => 'xx' ));
-ok(-e $objfile);
-$obj2 = $pem->read( Filename => $objfile );
-ok(!$obj2);
-ok($pem->errstr =~ /^Decryption failed/);
-$obj2 = $pem->read( Filename => $objfile, Password => 'xx');
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+lives_ok { $pem->write( Filename => $objfile, Content => $obj, Password => 'xx' ) } 'can write';
+ok -e $objfile, 'output file exists';
+lives_ok { $obj2 = $pem->read( Filename => $objfile ) } 'can read';
+ok !defined $obj2, 'cannot read encrypted file';
+like $pem->errstr, qr/^Decryption failed/, 'errstr matches decryption failed';
+lives_ok { $obj2 = $pem->read( Filename => $objfile, Password => 'xx') } 'can read';
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';
 unlink $objfile;
 
 $obj->{TestObject}{int} = Math::BigInt->new("110982309809809850938509");
-ok($pem->write( Filename => $objfile, Content => $obj));
-ok(-e $objfile);
-$obj2 = $pem->read( Filename => $objfile );
-ok($obj2);
-ok($obj->{TestObject}{int}, $obj2->{TestObject}{int});
+lives_ok { $pem->write( Filename => $objfile, Content => $obj) } 'can write';
+ok -e $objfile, 'output file exists';
+lives_ok { $obj2 = $pem->read( Filename => $objfile ) } 'can read';
+is $obj->{TestObject}{int}, $obj2->{TestObject}{int}, 'input matches output';
 unlink $objfile;
