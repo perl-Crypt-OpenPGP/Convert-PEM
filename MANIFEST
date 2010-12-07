@@ -30,5 +30,6 @@ t/00-compile.t
 t/01-readwrite.t
 t/02-encode.t
 t/03-ede3.t
+t/04-explode.t
 xt/pod.t
 xt/synopsis.t
