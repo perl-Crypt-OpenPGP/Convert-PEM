@@ -121,7 +121,7 @@ Convert::PEM::CBC - Cipher Block Chaining Mode implementation
 
 I<Convert::PEM::CBC> implements the CBC (Cipher Block Chaining)
 mode for encryption/decryption ciphers; the CBC is designed for
-compatability with OpenSSL and may not be compatible with other
+compatibility with OpenSSL and may not be compatible with other
 implementations (such as SSH).
 
 =head1 USAGE
