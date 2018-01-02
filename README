@@ -5,6 +5,7 @@ SYNOPSIS
         use Convert::PEM;
         my $pem = Convert::PEM->new(
                        Name => "DSA PRIVATE KEY",
+                       Macro => "DSAPrivateKey",
                        ASN => qq(
                            DSAPrivateKey SEQUENCE {
                                version INTEGER,
@@ -154,6 +155,12 @@ USAGE
         A password used to encrypt the contents of the PEM file. This is an
         optional argument; if not provided the contents will be unencrypted.
 
+    *   Cipher
+
+        The Cipher to use if a password is provided. This is an optional
+        argument; if not provided, the default of DES-EDE3-CBC will be used
+        or the cipher configured is $Convert::PEM::DefaultCipher.
+
   $obj = $pem->read(%args)
     Reads, decodes, and, optionally, decrypts a PEM file, returning the
     object as decoded by *Convert::ASN1*. This is implemented as a wrapper
@@ -201,6 +208,60 @@ USAGE
 
         $pem->asn->configure( decode => { bigint => 'Math::Pari' },
                               encode => { bigint => 'Math::Pari' } );
+
+CONFIGURATION
+    Some settings may be viewed or configured through variables or methods.
+
+  $Convert::PEM::DefaultCipher *or* $OBJ->DefaultCipher(*[NEW_CIPHER]*)
+    Used to configure a default cipher when writing to the disk. When using
+    the method form " $OBJ-"DefaultCipher([NEW_CIPHER]) >, if NEW_CIPHER is
+    not specified, will return the current setting. If the specified cipher
+    is not recognized/valid, will throw an error.
+
+    To list supported ciphers, use "Convert::PEM::list_ciphers".
+
+  Convert::PEM->has_cipher(*$cipher_name*)
+    Will see if the cipher is supported and is cofigured with an encryption
+    module.
+
+  Convert::PEM->has_cipher_module(*$cipher_name*)
+    Will see if the cipher is supported and if the cofigured encryption
+    module is usable. If it is not usable, will return "undef". If it is
+    usable, will return the name of the cipher module.
+
+  Convert::PEM->set_cipher_module($cipher,$module[,$all])
+    This function/method is used to specify a module name for a supported
+    cipher. It accepts 2 or 3 arguments.
+
+            Convert::PEM->set_cipher_module(<cipher_name>, <module_name>[,0])
+            or
+            $OBJ->set_cipher_module(<cipher_name>, <module_name>[,0])
+
+    "cipher_name"
+        A supported cipher name. Use Convert::PEM::list_ciphers() to
+        retrieve a list of support ciphers.
+
+    "module_name"
+        A cipher module. The module must support the following methods:
+
+                $cipher_object = Cipher->new($key)
+                $cipher_object->encrypt($plaintext)
+                $cipher_object->decrypt($ciphertext)
+                $cipher_object->blocksize()
+
+    "all"
+        An optional boolean argument. If true will replace the modules for
+        all supported ciphers matching the cipher being set. Default is
+        true. If setting a cipher, only set this to false if it is desired
+        to use a separate cipher for different key lengths of the same
+        algorithm.
+
+  Convert::PEM->list_cipher_modules([$cipher_name])
+    If a *cipher_name* is provided, will return the module configured for
+    the matching cipher name or "undef" if cipher is not supported. If
+    *cipher_name* is not provided, will return a list of modules names
+    configured as an array in array context or as a colon separated list in
+    scalar context.
 
 ERROR HANDLING
     If an error occurs in any of the above methods, the method will return
