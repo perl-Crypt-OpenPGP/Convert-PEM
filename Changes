@@ -1,9 +1,22 @@
 Revision history for Convert::PEM
 
 {{$NEXT}}
+    - Add DES support
+    - Add AES 128/192/256 support
+    - Add IDEA support
+    - Add SEED Support
+    - Add Camellia 128/192/256 support
+    - Add tests and test files for additional ciphers and alternate cipher modules (if available)
+    - Add supporting function(s)/method(s) for additional ciphers
+    - Add tests to verify OpenSSL can read files encrypted by Convert::PEM (if available)
+    - Change key bytes_to_key in Convert::PEM::CBC to match openssl algorithm
+    - Make some modifications to accommodate SEED and IDEA (realy old) cipher modules
+    - Make ASN optional
+    - Add DER support and documentation
+    - Add other access methods to documentation
+    - Additional encode/decode testing with DER
 
 0.09 -- Tue Oct 15 22:59:26 ADT 2024
-
     - 55f01eb Bump Repo Version
     - 4072ab2 Fixes RT#27574: encode test occasionlly fails
     - 204ffeb Convert build to Dist::Zilla
