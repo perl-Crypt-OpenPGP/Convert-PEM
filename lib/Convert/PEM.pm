@@ -24,17 +24,21 @@ sub new {
 sub init {
     my $pem = shift;
     my %param = @_;
-    unless (exists $param{ASN} && exists $param{Name}) {
-        return (ref $pem)->error("init: Name and ASN are required");
+    unless (exists $param{Name}) {
+        return (ref $pem)->error("init: Name is required");
     }
     else {
-        $pem->{ASN} = $param{ASN};
         $pem->{Name} = $param{Name};
+        $pem->{ASN} = $param{ASN} if exists $param{ASN};
+        $pem->{Cipher} = $param{Cipher} if exists $param{Cipher};
     }
-    $pem->{Macro} = $param{Macro};
-    my $asn = $pem->{_asn} = Convert::ASN1->new;
-    $asn->prepare( $pem->{ASN} ) or
-        return (ref $pem)->error("ASN prepare failed: $asn->{error}");
+
+	if (exists $pem->{ASN}) {
+		$pem->{Macro} = $param{Macro};
+		my $asn = $pem->{_asn} = Convert::ASN1->new;
+		$asn->prepare( $pem->{ASN} ) or
+			return (ref $pem)->error("ASN prepare failed: $asn->{error}");
+	}
 
 	$pem->_getform(%param) or return;
     $pem;
@@ -46,15 +50,28 @@ sub _getform {
 
 	my $in = uc($param{InForm}) || 'PEM';
 	$in =~ m/^(PEM|DER)$/ or return $pem->error("Invalid InForm '$in': must be PEM or DER");
+	$pem->{InForm} = $in;
 
 	my $out = uc($param{OutForm}) || 'PEM';
 	$out =~ m/^(PEM|DER)$/ or return $pem->error("Invalid OutForm '$out': must be PEM or DER");
+	$pem->{OutForm} = $out;
 	$pem;
 }
 
-sub asn    { $_[0]->{_asn} }
-sub ASN    { $_[0]->{ASN} }
-sub name   { $_[0]->{Name} }
+sub asn {
+	my $pem=shift;
+	my $asn = $pem->{_asn} || return;
+	my %prm=@_;
+	my $m = $prm{Macro} || $pem->{Macro};
+	$m ? $asn->find($m) : $asn;
+}
+
+sub ASN     { $_[0]->{ASN}     }
+sub name    { $_[0]->{Name}    }
+sub cipher  { $_[0]->{Cipher}  }
+sub inform  { $_[0]->{InForm}  }
+sub outform { $_[0]->{OutForm} }
+sub macro   { $_[0]->{Macro}   }
 
 sub read {
     my $pem = shift;
@@ -64,6 +81,7 @@ sub read {
     my $fname = delete $param{Filename};
     open my $FH, $fname or
         return $pem->error("Can't open $fname: $!");
+	binmode $FH;
 	read($FH,$blob,-s $fname);
     close $FH;
 
@@ -85,6 +103,7 @@ sub write {
 
     open my $FH, ">$fname" or
         return $pem->error("Can't open $fname: $!");
+	binmode $FH;
     print $FH $blob;
     close $FH;
     $blob;
@@ -94,21 +113,27 @@ sub from_der {
     my $pem = shift;
     my %param = @_;
 
-	# should always be unencrypted
-    my $asn = $pem->asn;
-    if (my $macro = ($param{Macro} || $pem->{Macro})) {
-        $asn = $asn->find($macro) or
-            return $pem->error("Can't find Macro $macro");
-    }
-    my $obj = $asn->decode( $param{DER} ) or
-        return $pem->error("ASN encode failed: $asn->{error}");
-
+	# should always be unencrypted at this point
+	my $obj;
+	if (exists $pem->{ASN}) {
+		my $asn = $pem->asn;
+		if (my $macro = ($param{Macro} || $pem->{Macro})) {
+			$asn = $asn->find($macro) or
+				return $pem->error("Can't find Macro $macro");
+		}
+		$obj = $asn->decode( $param{DER} ) or
+			return $pem->error("ASN encode failed: $asn->{error}");
+	}
+	else {
+		$obj = $param{DER};
+	}
 	$obj;
 }
 
 sub decode {
     my $pem = shift;
     my %param = @_;
+	if (exists $param{DER}) { return $pem->from_der(%param) }
     my $blob = $param{Content} or
         return $pem->error("'Content' is required");
     chomp $blob;
@@ -138,14 +163,19 @@ sub to_der {
     my $pem = shift;
     my %param = @_;
 
-    my $asn = $pem->asn;
-    if (my $macro = ($param{Macro} || $pem->{Macro})) {
-        $asn = $asn->find($macro) or
-            return $pem->error("Can't find Macro $macro");
-    }
-    my $buf = $asn->encode( $param{Content} ) or
-        return $pem->error("ASN encode failed: $asn->{error}");
-
+	my $buf;
+	if (exists $pem->{ASN}) {
+		my $asn = $pem->asn;
+		if (my $macro = ($param{Macro} || $pem->{Macro})) {
+			$asn = $asn->find($macro) or
+				return $pem->error("Can't find Macro $macro");
+		}
+		$buf = $asn->encode( $param{Content} ) or
+			return $pem->error("ASN encode failed: $asn->{error}");
+	}
+	else {
+		$buf = $param{Content}
+	}
 	$buf;
 }
 
@@ -226,9 +256,8 @@ sub list_ciphers { return wantarray ? sort keys %CTYPES : join(':', sort keys %C
 
 sub list_cipher_modules {
 	# expecta cipher name, if found, return the module name used for encryption/decryption
-	shift if ref($_[0]) || $_[0] eq __PACKAGE__;
-	if (defined $_[0])
-	{
+	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+	if (defined $_[0]) {
 		my$cn = has_cipher(shift) || return undef;
 		return $CTYPES{$cn}->{c};
 	}
@@ -239,7 +268,7 @@ sub list_cipher_modules {
 
 sub has_cipher {
 	# expect a cipher name, return the cipher name if found
-	shift if ref($_[0]) || $_[0] eq __PACKAGE__;
+	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
 	my $cn = uc(+shift);
 	return $cn if exists $CTYPES{$cn} && exists $CTYPES{$cn}->{c};
 	# try to figure out what cipher is meant in an overkill fashion
@@ -260,9 +289,8 @@ sub has_cipher {
 
 sub has_cipher_module
 {
-	shift if ref($_[0]) || $_[0] eq __PACKAGE__;
-	if (my$cn = has_cipher($_[0]))
-	{
+	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+	if (my$cn = has_cipher($_[0])) {
 		eval "use $CTYPES{$cn}->{c};";
 		if ($@) { undef $@; return undef; }
 		return $CTYPES{$cn}->{c};
@@ -271,7 +299,7 @@ sub has_cipher_module
 
 sub set_cipher_module
 {
-	shift if ref($_[0]) || $_[0] eq __PACKAGE__;
+	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
 	# cipher name, cipher module name, replace all
 	my($cn,$cm,$all) = @_;
 	$all = 1 unless defined $all;
@@ -304,7 +332,7 @@ sub decrypt {
     $iv = pack "H*", $iv;
 	eval "use $cmod->{c}; 1;" || croak "Failed loading cipher module '$cmod->{c}'";
 	my $key = Convert::PEM::CBC::bytes_to_key($passphrase,$iv,\&md5,$cmod->{ks});
-	my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA)//; # fix IDEA
+	my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
     my $cbc = Convert::PEM::CBC->new(
                    Cipher     => $cm->new($key),
                    IV         => $iv );
@@ -327,8 +355,7 @@ sub encrypt {
 	## allow custom IV for encryption
 	my $iv = $pem->_getiv(%param, bs => $cmod->{bs}) or return;
 	my $key = Convert::PEM::CBC::bytes_to_key( $param{Password}, $iv, \&md5, $cmod->{ks} );
-	my $cm = $cmod->{c};
-	$cm =~ s/^Crypt::(?=IDEA)//; # fix IDEA
+	my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
     my $cbc = Convert::PEM::CBC->new(
 					IV			=>	$iv,
                     Cipher    	=>	$cm->new($key) );
@@ -344,7 +371,7 @@ sub _getiv {
 
 	my $iv;
 	if (exists $p{IV}) {
-		if ($p{IV} =~ m/^[a-fA-F\d]$/) {
+		if ($p{IV} =~ m/^[a-fA-F\d]+$/) {
 			$iv = pack("H*",$p{IV});
 			return length($iv) == $p{bs}
 				? $iv
@@ -458,7 +485,7 @@ I<Name> is a required argument.
 
 An ASN.1 description of the content to be either encoded or decoded.
 
-I<ASN> is a required argument.
+I<ASN> is an optional argument.
 
 =item * Macro
 
@@ -478,7 +505,29 @@ If you want to encode/decode a C<Foo> object, you will need to tell
 I<Convert::PEM> to use the C<Foo> macro definition by using the I<Macro>
 parameter and setting the value to C<Foo>.
 
-I<Macro> is an optional argument.
+I<Macro> is an optional argument when an ASN.1 description is provided.
+
+=item * InForm
+
+Specify what type of file to expect when using the I<read> method.  Value
+may be either B<PEM> or B<DER>. Default is "PEM".
+
+If "DER" is specified, encryption options are ignored when using the
+I<read> method and file is read as an unencrypted blob. This option does
+not affect the I<decode> behavior.
+
+I<InForm> is an optional argument.
+
+=item * OutForm
+
+Specify what type of file the I<write> method should output.  Value may be
+either B<PEM> or B<DER>. Default is "PEM".
+
+If "DER" is specified, encryption options are ignored when using the
+I<write> method and the file is written as an uncrypted blob. This option
+does not affect the I<encode> behavior.
+
+I<OutForm> is an optional argument.
 
 =back
 
@@ -527,12 +576,22 @@ I<%args> can contain:
 
 =item * Content
 
+This method requires either Content or DER.  An error will be generated
+if one of these arguments are not present.
+
 A hash reference that will be passed to I<Convert::ASN1::encode>,
 and which should correspond to the ASN.1 description you gave to the
 I<new> method. The hash reference should have the exact same format
 as that returned from the I<read> method.
 
-This argument is mandatory.
+This is required unless DER is specified.
+
+=item * DER
+
+A string containing actual binary of the contents to be encoded. This
+bypasses ASN.1 encoding.
+
+May be used in lieu of Content.  If specified, will override Content.
 
 =item * Password
 
@@ -543,29 +602,36 @@ optional argument; if not provided the contents will be unencrypted.
 
 The Cipher to use if a password is provided.  This is an optional
 argument; if not provided, the default of B<DES-EDE3-CBC> will be used
-or the cipher configured is B<$Convert::PEM::DefaultCipher>.
+or the cipher configured is B<$Convert::PEM::DefaultCipher>. See below
+for a list of supported ciphers.
 
 =back
 
 =head2 $obj = $pem->read(%args)
 
 Reads, decodes, and, optionally, decrypts a PEM file, returning
-the object as decoded by I<Convert::ASN1>. This is implemented
-as a wrapper around I<decode>, with the bonus of reading the PEM
-file from disk for you.
+the object as decoded by I<Convert::ASN1> (or binary blob if ASN.1
+description was not provided). This is implemented as a wrapper
+around I<decode>, with the bonus of reading the PEM file from disk
+for you.
 
 If an error occurs while reading the file or decrypting/decoding
 the contents, the function returns I<undef>, and you should check
 the error message using the I<errstr> method (below).
 
 In addition to the arguments that can be passed to the I<decode>
-method (minus the I<Content> method), I<%args> can contain:
+method (minus the I<Content> argument), I<%args> can contain:
 
 =over 4
 
 =item * Filename
 
 The location of the PEM file that you wish to read.
+
+=item * InForm
+
+Specify what file type to read.  Description can be found under I<new>
+method.  If specified, will override InForm provided in I<new> method.
 
 =back
 
@@ -588,6 +654,55 @@ In addition to the arguments for I<encode>, I<%args> can contain:
 
 The location on disk where you'd like the PEM file written.
 
+=item * OutForm
+
+Specify format to write out. Description can be found under I<new> method.
+If specified, will override OutForm provided in I<new> method.
+
+=back
+
+=head2 $pem->from_der(%args)
+
+Method used internally, but may be accessed directly decode an ASN.1 string
+into a perl structure object.  If the Convert::PEM object has no ASN.1
+definition, this method has no effect.
+
+=over 4
+
+=item * DER
+
+Binary string to convert to an object.
+
+This option is required.
+
+=item * Macro
+
+If the object has an ASN definition, a Macro may be specified. If specified,
+it will override the object's Macro if one exists.
+
+Macro is an optional argument.
+
+=back
+
+=head2 $pem->to_der(%args)
+
+Method used internally, but may be accessed directly to encode Content into
+binary data.  If the Convert::PEM object has no ASN.1 definition, this
+method has no effect.
+
+=over 4
+
+=item * Content
+
+An object to be ASN.1 encoded to a binary string.
+
+=item * Macro
+
+If the object has an ASN definition, a Macro may be specified. If specified,
+it will override the object's Macro if one exists.
+
+Macro is an optional argument.
+
 =back
 
 =head2 $pem->errstr
@@ -607,18 +722,66 @@ class to be used when decoding/encoding big integers:
     $pem->asn->configure( decode => { bigint => 'Math::Pari' },
                           encode => { bigint => 'Math::Pari' } );
 
+
+=head2 $pem->inform
+
+Retruns the I<InForm> configured for the object.
+
+=head2 $pem->outform
+
+Retruns the I<OutForm> configured for the object.
+
+=head2 $pem->cipher
+
+Returns the I<Cipher> configured for the object.
+
+=head2 $pem->name
+
+Returns the PEM I<Name> of the object.
+
 =head1 CONFIGURATION
 
+To support any encryption/decryption, the appropriate cipher module needs
+to be installed.
+
 Some settings may be viewed or configured through variables or methods.
+
+Configuration settings are global to the package. If a setting is changed,
+it affects all Convert::PEM objects.
 
 =head2 $Convert::PEM::DefaultCipher I<or> $OBJ->DefaultCipher(I<[NEW_CIPHER]>)
 
 Used to configure a default cipher when writing to the disk. When using
 the method form C< $OBJ->DefaultCipher([NEW_CIPHER]) >, if NEW_CIPHER
 is not specified, will return the current setting.  If the specified
-cipher is not recognized/valid, will throw an error.
+cipher is not recognized/valid, an error will be raised.
 
-To list supported ciphers, use C<Convert::PEM::list_ciphers>.
+To list supported ciphers, use C<Convert::PEM::list_ciphers>. Here is a
+list of supported Ciphers:
+
+=over 4
+
+=item * DES-CBC
+
+=item * DES-EDE3-CBC
+
+=item * AES-128-CBC
+
+=item * AES-192-CBC
+
+=item * AES-256-CBC
+
+=item * CAMELLIA-128-CBC
+
+=item * CAMELLIA-192-CBC
+
+=item * CAMELLIA-256-CBC
+
+=item * IDEA-CBC
+
+=item * SEED-CBC
+
+=back
 
 =head2 Convert::PEM->has_cipher(I<$cipher_name>)
 
@@ -645,7 +808,7 @@ cipher.  It accepts 2 or 3 arguments.
 =item C<cipher_name>
 
 A supported cipher name. Use Convert::PEM::list_ciphers() to retrieve a
-list of support ciphers.
+list of supported ciphers.
 
 =item C<module_name>
 
@@ -672,6 +835,24 @@ the matching cipher name or C<undef> if cipher is not supported.
 If I<cipher_name> is not provided, will return a list of modules names
 configured as an array in array context or as a colon separated list in
 scalar context.
+
+Here is a list of the cipher modules used by default.
+
+=over 4
+
+=item * L<Crypt::DES>
+
+=item * L<Crypt::DES_EDE3>
+
+=item * L<Crypt::Rijndael> - C<AES-128-CBC, AES-192-CBC and AES-256-CBC>
+
+=item * L<Crypt::Camellia> - C<CAMELLIA-128-CBC, CAMELLIA-192-CBC and CAMELLIA-256-CBC>
+
+=item * Crypt::L<IDEA>
+
+=item * L<Crypt::SEED>
+
+=back
 
 =head1 ERROR HANDLING
 

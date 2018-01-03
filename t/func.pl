@@ -37,7 +37,7 @@ sub run_tests
 			} @{$modules};
 	}
 	if (!@mods) {
-		plan skip_all => "because there are no modules installed that support cipher(s) being tested: '".join("', '", sort keys %ciphs)."'";
+		plan skip_all => "because there are no modules installed that support cipher(s) being tested: '".join("', '", sort keys %ciphs)."'. Usually OK";
 		exit;
 	}
 
@@ -50,8 +50,8 @@ sub run_tests
 	$test_count += ( scalar(@mods) * scalar(@files) * $cnt );		# file tests
 
 	plan tests => $test_count;
-	diag "Some modules failed to load and cannot be tested: '".join("', '", @mmiss)."'" if @mmiss;
-	diag "Some test files are missing and cannot be tested: '".join("', '", @fmiss)."'" if @fmiss;
+	diag "Some cipher modules failed to load and cannot be tested: '".join("', '", @mmiss)."'. usually OK" if @mmiss;
+	diag "Some test files are missing and cannot be tested: '".join("', '", @fmiss)."'. usually OK" if @fmiss;
 
 	isa_ok $pem, "Convert::PEM";
 
@@ -140,7 +140,9 @@ ASN1
 		Name 	=> "RSA PRIVATE KEY",
 		ASN  	=> $rsa_asn,
 		Macro	=>	"RSAPrivateKey",
+		@_,
     );
 }
+
 
 1;
