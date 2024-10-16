@@ -1,6 +1,7 @@
 package Convert::PEM::CBC;
 use strict;
 
+# VERSION
 use Carp qw( croak );
 use Digest::MD5 qw( md5 );
 use base qw( Class::ErrorHandler );

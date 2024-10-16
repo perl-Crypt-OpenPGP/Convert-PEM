@@ -1,5 +1,7 @@
 Revision history for Convert::PEM
 
+{{$NEXT}}
+
 0.08  2010.12.06
     - Altered explode() to canonicalize line endings to \n, handling
       DOS (\r\n) and older mac (\r) line breaks cleanly. Thanks to Matt
