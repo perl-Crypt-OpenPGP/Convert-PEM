@@ -42,6 +42,7 @@ sub run_tests
 	}
 
 	my $ossl = !system('openssl version > /dev/null');
+	my $ossl_ver = `openssl version`;
 	my $cnt = 15;
 	$cnt += 1 if $ossl;
 
@@ -101,7 +102,12 @@ sub run_tests
 
 			# openssl tests
 			if ($ossl) {
-				ok !system("openssl rsa -in $t->{tx} -passin pass:test -noout 2> /dev/null"), "use openssl to read file '$t->{tx}' encrypted with $t->{name} using module $m";
+ 				SKIP: {
+ 					skip("No support for IDEA-CBC", 1) if (`openssl enc -ciphers` !~ /idea-cbc/m) && ($t->{tx} =~ /idea/);
+  					skip("No support for DES", 1) 
+  						if (`openssl enc -ciphers` !~ /des-cbc/m) || (($t->{tx} =~ /des.wr.pem/) && ($ossl_ver =~ /OpenSSL 3/));
+					ok !system("openssl rsa -in $t->{tx} -passin pass:test -noout 2> /dev/null"), "use openssl to read file '$t->{tx}' encrypted with $t->{name} using module $m";
+ 				}
 			}
 			unlink $t->{tx};
 		}
