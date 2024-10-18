@@ -41,28 +41,28 @@ sub iv     { $_[0]->{iv} }
 
 sub encrypt {
     my $cbc = shift;
-    my($text) = @_;
+    my ($text) = @_;
     my $cipher = $cbc->{cipher};
-	## special stuff for the old SEED package
-	my $seed = ref($cipher) eq "Crypt::SEED";
-	my $bs = ($seed ? 16 : eval '$cipher->blocksize')
-		or return $cbc->error("This cipher does not support the blocksize method");
+    ## special stuff for the old SEED package
+    my $seed = ref($cipher) eq "Crypt::SEED";
+    my $bs = ($seed ? 16 : eval '$cipher->blocksize')
+        or return $cbc->error("This cipher does not support the blocksize method");
     my @blocks = $text =~ /(.{1,$bs})/gs;
     my $last = pop @blocks if length($blocks[-1]) < $bs;
     my $iv = $cbc->{iv};
     my $buf = '';
     for my $block (@blocks) {
         $buf .= $iv = $seed
-			? $cipher->encrypt($iv ^ $block,0)
-			: $cipher->encrypt($iv ^ $block);
+            ? $cipher->encrypt($iv ^ $block,0)
+            : $cipher->encrypt($iv ^ $block);
     }
     $last = pack("C*", ($bs) x $bs) unless $last && length $last;
     if (length $last) {
         $last .= pack("C*", ($bs-length($last)) x ($bs-length($last)))
             if length($last) < $bs;
         $buf .= $iv = $seed
-			? $cipher->encrypt($iv ^ $last,0)
-			: $cipher->encrypt($iv ^ $last);
+            ? $cipher->encrypt($iv ^ $last,0)
+            : $cipher->encrypt($iv ^ $last);
     }
     $cbc->{iv} = $iv;
     $buf;
@@ -70,29 +70,29 @@ sub encrypt {
 
 sub decrypt {
     my $cbc = shift;
-    my($text) = @_;
+    my ($text) = @_;
     my $cipher = $cbc->{cipher};
-	## special stuff for the old SEED package
-	my $seed = ref($cipher) eq "Crypt::SEED";
-	my $bs = ($seed ? 16 : eval '$cipher->blocksize')
-		or return $cbc->error("This cipher does not support the blocksize method");
+    ## special stuff for the old SEED package
+    my $seed = ref($cipher) eq "Crypt::SEED";
+    my $bs = ($seed ? 16 : eval '$cipher->blocksize')
+        or return $cbc->error("This cipher does not support the blocksize method");
     my @blocks = $text =~ /(.{1,$bs})/gs;
     my $last = length($blocks[-1]) < $bs ?
         join '', splice(@blocks, -2) : pop @blocks;
     my $iv = $cbc->{iv};
     my $buf = '';
-	## more special stuff for the old SEED package
+    ## more special stuff for the old SEED package
     for my $block (@blocks) {
         $buf .= $iv ^ ($seed
-			? $cipher->decrypt($block,0)
-			: $cipher->decrypt($block));
+            ? $cipher->decrypt($block,0)
+            : $cipher->decrypt($block));
         $iv = $block;
     }
     $last = pack "a$bs", $last;
     if (length($last)) {
         my $tmp = $iv ^ ($seed
-			? $cipher->decrypt($last,0)
-			: $cipher->decrypt($last));
+            ? $cipher->decrypt($last,0)
+            : $cipher->decrypt($last));
         $iv = $last;
         $last = $tmp;
         my $cut = ord substr $last, -1;
@@ -106,7 +106,7 @@ sub decrypt {
 }
 
 sub bytes_to_key {
-    my($key, $salt, $md, $ks) = @_;
+    my ($key, $salt, $md, $ks) = @_;
     my $ckey = $md->($key . substr($salt,0,8));
     while (length($ckey) < $ks) {
         $ckey .= $md->($ckey, $key, substr($salt,0,8));

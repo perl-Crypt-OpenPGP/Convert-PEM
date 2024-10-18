@@ -33,37 +33,37 @@ sub init {
         $pem->{Cipher} = $param{Cipher} if exists $param{Cipher};
     }
 
-	if (exists $pem->{ASN}) {
-		$pem->{Macro} = $param{Macro};
-		my $asn = $pem->{_asn} = Convert::ASN1->new;
-		$asn->prepare( $pem->{ASN} ) or
-			return (ref $pem)->error("ASN prepare failed: $asn->{error}");
-	}
+    if (exists $pem->{ASN}) {
+        $pem->{Macro} = $param{Macro};
+        my $asn = $pem->{_asn} = Convert::ASN1->new;
+        $asn->prepare( $pem->{ASN} ) or
+            return (ref $pem)->error("ASN prepare failed: $asn->{error}");
+    }
 
-	$pem->_getform(%param) or return;
+    $pem->_getform(%param) or return;
     $pem;
 }
 
 sub _getform {
-	my$pem=shift;
-	my%param=@_;
+    my $pem = shift;
+    my %param = @_;
 
-	my $in = uc($param{InForm}) || 'PEM';
-	$in =~ m/^(PEM|DER)$/ or return $pem->error("Invalid InForm '$in': must be PEM or DER");
-	$pem->{InForm} = $in;
+    my $in = uc($param{InForm}) || 'PEM';
+    $in =~ m/^(PEM|DER)$/ or return $pem->error("Invalid InForm '$in': must be PEM or DER");
+    $pem->{InForm} = $in;
 
-	my $out = uc($param{OutForm}) || 'PEM';
-	$out =~ m/^(PEM|DER)$/ or return $pem->error("Invalid OutForm '$out': must be PEM or DER");
-	$pem->{OutForm} = $out;
-	$pem;
+    my $out = uc($param{OutForm}) || 'PEM';
+    $out =~ m/^(PEM|DER)$/ or return $pem->error("Invalid OutForm '$out': must be PEM or DER");
+    $pem->{OutForm} = $out;
+    $pem;
 }
 
 sub asn {
-	my $pem=shift;
-	my $asn = $pem->{_asn} || return;
-	my %prm=@_;
-	my $m = $prm{Macro} || $pem->{Macro};
-	$m ? $asn->find($m) : $asn;
+    my $pem = shift;
+    my $asn = $pem->{_asn} || return;
+    my %prm = @_;
+    my $m = $prm{Macro} || $pem->{Macro};
+    $m ? $asn->find($m) : $asn;
 }
 
 sub ASN     { $_[0]->{ASN}     }
@@ -81,13 +81,13 @@ sub read {
     my $fname = delete $param{Filename};
     open my $FH, $fname or
         return $pem->error("Can't open $fname: $!");
-	binmode $FH;
-	read($FH,$blob,-s $fname);
+    binmode $FH;
+    read($FH, $blob, -s $fname);
     close $FH;
 
-	$pem->{InForm} eq 'DER'
-		? $pem->from_der( DER => $blob )
-		: $pem->decode(%param, Content => $blob);
+    $pem->{InForm} eq 'DER'
+        ? $pem->from_der( DER => $blob )
+        : $pem->decode(%param, Content => $blob);
 }
 
 sub write {
@@ -96,14 +96,14 @@ sub write {
 
     my $fname = delete $param{Filename} or
         return $pem->error("write: Filename is required");
-	
+
     my $blob = $pem->{OutForm} eq 'DER'
-		? $pem->to_der(%param)
-		: $pem->encode(%param);
+        ? $pem->to_der(%param)
+        : $pem->encode(%param);
 
     open my $FH, ">$fname" or
         return $pem->error("Can't open $fname: $!");
-	binmode $FH;
+    binmode $FH;
     print $FH $blob;
     close $FH;
     $blob;
@@ -113,27 +113,27 @@ sub from_der {
     my $pem = shift;
     my %param = @_;
 
-	# should always be unencrypted at this point
-	my $obj;
-	if (exists $pem->{ASN}) {
-		my $asn = $pem->asn;
-		if (my $macro = ($param{Macro} || $pem->{Macro})) {
-			$asn = $asn->find($macro) or
-				return $pem->error("Can't find Macro $macro");
-		}
-		$obj = $asn->decode( $param{DER} ) or
-			return $pem->error("ASN encode failed: $asn->{error}");
-	}
-	else {
-		$obj = $param{DER};
-	}
-	$obj;
+    # should always be unencrypted at this point
+    my $obj;
+    if (exists $pem->{ASN}) {
+        my $asn = $pem->asn;
+        if (my $macro = ($param{Macro} || $pem->{Macro})) {
+            $asn = $asn->find($macro) or
+                return $pem->error("Can't find Macro $macro");
+        }
+        $obj = $asn->decode( $param{DER} ) or
+            return $pem->error("ASN encode failed: $asn->{error}");
+    }
+    else {
+        $obj = $param{DER};
+    }
+    $obj;
 }
 
 sub decode {
     my $pem = shift;
     my %param = @_;
-	if (exists $param{DER}) { return $pem->from_der(%param) }
+    if (exists $param{DER}) { return $pem->from_der(%param) }
     my $blob = $param{Content} or
         return $pem->error("'Content' is required");
     chomp $blob;
@@ -153,8 +153,8 @@ sub decode {
             or return;
     }
 
-	my $obj = $pem->from_der( DER => $buf )
-		or return;
+    my $obj = $pem->from_der( DER => $buf )
+        or return;
 
     $obj;
 }
@@ -163,30 +163,30 @@ sub to_der {
     my $pem = shift;
     my %param = @_;
 
-	my $buf;
-	if (exists $pem->{ASN}) {
-		my $asn = $pem->asn;
-		if (my $macro = ($param{Macro} || $pem->{Macro})) {
-			$asn = $asn->find($macro) or
-				return $pem->error("Can't find Macro $macro");
-		}
-		$buf = $asn->encode( $param{Content} ) or
-			return $pem->error("ASN encode failed: $asn->{error}");
-	}
-	else {
-		$buf = $param{Content}
-	}
-	$buf;
+    my $buf;
+    if (exists $pem->{ASN}) {
+        my $asn = $pem->asn;
+        if (my $macro = ($param{Macro} || $pem->{Macro})) {
+            $asn = $asn->find($macro) or
+                return $pem->error("Can't find Macro $macro");
+        }
+        $buf = $asn->encode( $param{Content} ) or
+            return $pem->error("ASN encode failed: $asn->{error}");
+    }
+    else {
+        $buf = $param{Content}
+    }
+    $buf;
 }
 
 sub encode {
     my $pem = shift;
     my %param = @_;
 
-	my $buf = $param{DER} || $pem->to_der(%param);
-    my(@headers);
+    my $buf = $param{DER} || $pem->to_der(%param);
+    my (@headers);
     if ($param{Password}) {
-        my($info);
+        my ($info);
         ($buf, $info) = $pem->encrypt( Plaintext => $buf,
                                        %param )
             or return;
@@ -201,19 +201,19 @@ sub encode {
 
 sub explode {
     my $pem = shift;
-    my($message) = @_;
+    my ($message) = @_;
 
     # Canonicalize line endings into "\n".
     $message =~ s/\r\n|\n|\r/\n/g;
 
-    my($head, $object, $headers, $content, $tail) = $message =~ 
+    my ($head, $object, $headers, $content, $tail) = $message =~ 
         m:(-----BEGIN ([^\n\-]+)-----)\n(.*?\n\n)?(.+)(-----END .*?-----)$:s;
     my $buf = decode_base64($content);
 
     my @headers;
     if ($headers) {
         for my $h ( split /\n/, $headers ) {
-            my($k, $v) = split /:\s*/, $h, 2;
+            my ($k, $v) = split /:\s*/, $h, 2;
             push @headers, [ $k => $v ] if $k;
         }
     }
@@ -239,86 +239,86 @@ sub implode {
 
 use vars qw( %CTYPES );
 %CTYPES = (
-	'DES-CBC'			=>	{c => 'Crypt::DES', 		ks=>8,  bs=>8,  },
-	'DES-EDE3-CBC'		=>	{c => 'Crypt::DES_EDE3',	ks=>24, bs=>8,  },
-	'AES-128-CBC'		=>	{c => 'Crypt::Rijndael',	ks=>16, bs=>16, },
-	'AES-192-CBC'		=>	{c => 'Crypt::Rijndael',	ks=>24, bs=>16, },
-	'AES-256-CBC'		=>	{c => 'Crypt::Rijndael',	ks=>32, bs=>16, },
-	'CAMELLIA-128-CBC'	=>	{c => 'Crypt::Camellia',	ks=>16, bs=>16, },
-	'CAMELLIA-192-CBC'	=>	{c => 'Crypt::Camellia',	ks=>24, bs=>16, },
-	'CAMELLIA-256-CBC'	=>	{c => 'Crypt::Camellia',	ks=>32, bs=>16, },
-	'IDEA-CBC'			=>	{c => 'Crypt::IDEA',		ks=>16, bs=>8,  },
-	'SEED-CBC'			=>	{c => 'Crypt::SEED',		ks=>16, bs=>16, },
+    'DES-CBC'           =>    {c => 'Crypt::DES',         ks=>8,  bs=>8,  },
+    'DES-EDE3-CBC'      =>    {c => 'Crypt::DES_EDE3',    ks=>24, bs=>8,  },
+    'AES-128-CBC'       =>    {c => 'Crypt::Rijndael',    ks=>16, bs=>16, },
+    'AES-192-CBC'       =>    {c => 'Crypt::Rijndael',    ks=>24, bs=>16, },
+    'AES-256-CBC'       =>    {c => 'Crypt::Rijndael',    ks=>32, bs=>16, },
+    'CAMELLIA-128-CBC'  =>    {c => 'Crypt::Camellia',    ks=>16, bs=>16, },
+    'CAMELLIA-192-CBC'  =>    {c => 'Crypt::Camellia',    ks=>24, bs=>16, },
+    'CAMELLIA-256-CBC'  =>    {c => 'Crypt::Camellia',    ks=>32, bs=>16, },
+    'IDEA-CBC'          =>    {c => 'Crypt::IDEA',        ks=>16, bs=>8,  },
+    'SEED-CBC'          =>    {c => 'Crypt::SEED',        ks=>16, bs=>16, },
 );
 
 #### cipher module support and configuration
 sub list_ciphers { return wantarray ? sort keys %CTYPES : join(':', sort keys %CTYPES); }
 
 sub list_cipher_modules {
-	# expecta cipher name, if found, return the module name used for encryption/decryption
-	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
-	if (defined $_[0]) {
-		my$cn = has_cipher(shift) || return undef;
-		return $CTYPES{$cn}->{c};
-	}
-	return wantarray
-		? map { $CTYPES{$_}->{c} } sort keys %CTYPES
-		: join(':', map { $CTYPES{$_}->{c} } sort keys %CTYPES);
+    # expecta cipher name, if found, return the module name used for encryption/decryption
+    my $pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+    if (defined $_[0]) {
+        my $cn = has_cipher(shift) || return undef;
+        return $CTYPES{$cn}->{c};
+    }
+    return wantarray
+        ? map { $CTYPES{$_}->{c} } sort keys %CTYPES
+        : join(':', map { $CTYPES{$_}->{c} } sort keys %CTYPES);
 }
 
 sub has_cipher {
-	# expect a cipher name, return the cipher name if found
-	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
-	my $cn = uc(+shift);
-	return $cn if exists $CTYPES{$cn} && exists $CTYPES{$cn}->{c};
-	# try to figure out what cipher is meant in an overkill fashion
-	$cn =~ s/(DES.*3|3DES|EDE)|(DES)|([a-zA-Z]+)(?:-?(\d+)(?:-?(\w+))?)/
-		if ($1) {
-			'DES-EDE3-CBC'
-		} elsif ($2) {
-			'DES-CBC'
-		}
-		else {
-			$3.($4 ? "-".$4 : "").($5 ? "-$5" : "")
-		}
-	/e;
-	my @c = sort grep { $_ =~ m/$cn/ } keys %CTYPES;
-	# return undef unless @c;
-	$c[0];
+    # expect a cipher name, return the cipher name if found
+    my $pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+    my $cn = uc(+shift);
+    return $cn if exists $CTYPES{$cn} && exists $CTYPES{$cn}->{c};
+    # try to figure out what cipher is meant in an overkill fashion
+    $cn =~ s/(DES.*3|3DES|EDE)|(DES)|([a-zA-Z]+)(?:-?(\d+)(?:-?(\w+))?)/
+        if ($1) {
+            'DES-EDE3-CBC'
+        } elsif ($2) {
+            'DES-CBC'
+        }
+        else {
+            $3.($4 ? "-".$4 : "").($5 ? "-$5" : "")
+        }
+    /e;
+    my @c = sort grep { $_ =~ m/$cn/ } keys %CTYPES;
+    # return undef unless @c;
+    $c[0];
 }
 
 sub has_cipher_module
 {
-	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
-	if (my$cn = has_cipher($_[0])) {
-		eval "use $CTYPES{$cn}->{c};";
-		if ($@) { undef $@; return undef; }
-		return $CTYPES{$cn}->{c};
-	}
+    my $pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+    if (my $cn = has_cipher($_[0])) {
+        eval "use $CTYPES{$cn}->{c};";
+        if ($@) { undef $@; return undef; }
+        return $CTYPES{$cn}->{c};
+    }
 }
 
 sub set_cipher_module
 {
-	my$pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
-	# cipher name, cipher module name, replace all
-	my($cn,$cm,$all) = @_;
-	$all = 1 unless defined $all;
-	# when setting ciphers, must use exact name
-	if (exists $CTYPES{$cn}) {
-		eval "use $cm ;";
-		if ($@) { undef $@; return undef; }
-		if ($all && exists $CTYPES{$cn}->{c}) {
-			my $old_cm = $CTYPES{$cn}->{c};
-			foreach my $def (values %CTYPES) {
-				$def->{c} = $cm if $def->{c} eq $old_cm;
-			}
-		}
-		else {
-			$CTYPES{$cn}->{c} = $cm;
-		}
-		return $cm;
-	}
-	return undef;
+    my $pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
+    # cipher name, cipher module name, replace all
+    my ($cn,$cm,$all) = @_;
+    $all = 1 unless defined $all;
+    # when setting ciphers, must use exact name
+    if (exists $CTYPES{$cn}) {
+        eval "use $cm ;";
+        if ($@) { undef $@; return undef; }
+        if ($all && exists $CTYPES{$cn}->{c}) {
+            my $old_cm = $CTYPES{$cn}->{c};
+            foreach my $def (values %CTYPES) {
+                $def->{c} = $cm if $def->{c} eq $old_cm;
+            }
+        }
+        else {
+            $CTYPES{$cn}->{c} = $cm;
+        }
+        return $cm;
+    }
+    return undef;
 }
 
 #### cipher functions
@@ -326,13 +326,13 @@ sub decrypt {
     my $pem = shift;
     my %param = @_;
     my $passphrase = $param{Password} || "";
-    my($ctype, $iv) = split /,/, $param{Info};
+    my ($ctype, $iv) = split /,/, $param{Info};
     my $cmod = $CTYPES{$ctype} or
         return $pem->error("Unrecognized cipher: '$ctype'");
     $iv = pack "H*", $iv;
-	eval "use $cmod->{c}; 1;" || croak "Failed loading cipher module '$cmod->{c}'";
-	my $key = Convert::PEM::CBC::bytes_to_key($passphrase,$iv,\&md5,$cmod->{ks});
-	my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
+    eval "use $cmod->{c}; 1;" || croak "Failed loading cipher module '$cmod->{c}'";
+    my $key = Convert::PEM::CBC::bytes_to_key($passphrase,$iv,\&md5,$cmod->{ks});
+    my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
     my $cbc = Convert::PEM::CBC->new(
                    Cipher     => $cm->new($key),
                    IV         => $iv );
@@ -346,19 +346,19 @@ sub encrypt {
     my %param = @_;
     $param{Password} or return $param{Plaintext};
 
-	$param{Cipher} = $DefaultCipher if !$param{Cipher};
+    $param{Cipher} = $DefaultCipher if !$param{Cipher};
     my $ctype = $pem->has_cipher( $param{Cipher} );
     my $cmod = $CTYPES{$ctype} or
         return $pem->error("Unrecognized cipher: '$ctype'");
-	eval "use $cmod->{c}; 1;" || croak "Error loading cypher module '$cmod->{c}'";
+    eval "use $cmod->{c}; 1;" || croak "Error loading cypher module '$cmod->{c}'";
 
-	## allow custom IV for encryption
-	my $iv = $pem->_getiv(%param, bs => $cmod->{bs}) or return;
-	my $key = Convert::PEM::CBC::bytes_to_key( $param{Password}, $iv, \&md5, $cmod->{ks} );
-	my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
+    ## allow custom IV for encryption
+    my $iv = $pem->_getiv(%param, bs => $cmod->{bs}) or return;
+    my $key = Convert::PEM::CBC::bytes_to_key( $param{Password}, $iv, \&md5, $cmod->{ks} );
+    my $cm = $cmod->{c}; $cm =~ s/^Crypt::(?=IDEA$)//; # fix IDEA
     my $cbc = Convert::PEM::CBC->new(
-					IV			=>	$iv,
-                    Cipher    	=>	$cm->new($key) );
+                    IV            =>    $iv,
+                    Cipher        =>    $cm->new($key) );
     my $iv = uc join '', unpack "H*", $cbc->iv;
     my $buf = $cbc->encrypt($param{Plaintext}) or
         return $pem->error("Encryption failed: " . $cbc->errstr);
@@ -366,24 +366,24 @@ sub encrypt {
 }
 
 sub _getiv {
-	my $pem = shift;
-	my %p = @_;
+    my $pem = shift;
+    my %p = @_;
 
-	my $iv;
-	if (exists $p{IV}) {
-		if ($p{IV} =~ m/^[a-fA-F\d]+$/) {
-			$iv = pack("H*",$p{IV});
-			return length($iv) == $p{bs}
-				? $iv
-				: $pem->error("Provided IV length is invalid");
-		}
-		else {
-			return $pem->error("Provided IV must be in hex format");
-		}
-	}
-	$iv = pack("C*", map { rand 255 } 1..$p{bs});
-	croak "Internal error: unexpected IV length" if length($iv) != $p{bs};
-	$iv;
+    my $iv;
+    if (exists $p{IV}) {
+        if ($p{IV} =~ m/^[a-fA-F\d]+$/) {
+            $iv = pack("H*",$p{IV});
+            return length($iv) == $p{bs}
+                ? $iv
+                : $pem->error("Provided IV length is invalid");
+        }
+        else {
+            return $pem->error("Provided IV must be in hex format");
+        }
+    }
+    $iv = pack("C*", map { rand 255 } 1..$p{bs});
+    croak "Internal error: unexpected IV length" if length($iv) != $p{bs};
+    $iv;
 }
 
 1;
@@ -799,9 +799,9 @@ usable, will return the name of the cipher module.
 This function/method  is used to specify a module name for a supported
 cipher.  It accepts 2 or 3 arguments.
 
-	Convert::PEM->set_cipher_module(<cipher_name>, <module_name>[,0])
-	or
-	$OBJ->set_cipher_module(<cipher_name>, <module_name>[,0])
+    Convert::PEM->set_cipher_module(<cipher_name>, <module_name>[,0])
+    or
+    $OBJ->set_cipher_module(<cipher_name>, <module_name>[,0])
 
 =over 4
 
@@ -814,10 +814,10 @@ list of supported ciphers.
 
 A cipher module.  The module must support the following methods:
 
-	$cipher_object = Cipher->new($key)
-	$cipher_object->encrypt($plaintext)
-	$cipher_object->decrypt($ciphertext)
-	$cipher_object->blocksize()
+    $cipher_object = Cipher->new($key)
+    $cipher_object->encrypt($plaintext)
+    $cipher_object->decrypt($ciphertext)
+    $cipher_object->blocksize()
 
 =item C<all>
 
