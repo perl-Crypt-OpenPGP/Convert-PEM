@@ -327,11 +327,11 @@ CONFIGURATION
     *   SEED-CBC
 
   Convert::PEM->has_cipher(*$cipher_name*)
-    Will see if the cipher is supported and is cofigured with an encryption
+    Will see if the cipher is supported and is configured with an encryption
     module.
 
   Convert::PEM->has_cipher_module(*$cipher_name*)
-    Will see if the cipher is supported and if the cofigured encryption
+    Will see if the cipher is supported and if the configured encryption
     module is usable. If it is not usable, will return "undef". If it is
     usable, will return the name of the cipher module.
 

@@ -257,7 +257,7 @@ use vars qw( %CTYPES );
 sub list_ciphers { return wantarray ? sort keys %CTYPES : join(':', sort keys %CTYPES); }
 
 sub list_cipher_modules {
-    # expecta cipher name, if found, return the module name used for encryption/decryption
+    # expect a cipher name, if found, return the module name used for encryption/decryption
     my $pem = ref($_[0]) || $_[0] eq __PACKAGE__ ? shift : '';
     if (defined $_[0]) {
         my $cn = has_cipher(shift) || return undef;
@@ -787,12 +787,12 @@ list of supported Ciphers:
 
 =head2 Convert::PEM->has_cipher(I<$cipher_name>)
 
-Will see if the cipher is supported and is cofigured with an encryption
+Will see if the cipher is supported and is configured with an encryption
 module.
 
 =head2 Convert::PEM->has_cipher_module(I<$cipher_name>)
 
-Will see if the cipher is supported and if the cofigured encryption
+Will see if the cipher is supported and if the configured encryption
 module is usable.  If it is not usable, will return C<undef>.  If it is
 usable, will return the name of the cipher module.
 
