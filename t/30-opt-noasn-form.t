@@ -6,13 +6,13 @@ use Digest::MD5 qw(md5 md5_hex);
 
 sub undefl { @_[0..$#_]=(); }
 
-my $pem_in = './t/rsakey.pem';
-my $der_in = './t/rsakey.der';
+my $pem_in = './t/data/rsakey.pem';
+my $der_in = './t/data/rsakey.der';
 
 unless (-e $pem_in && -e $der_in) { plan skip_all => "because the necessary test files do not exist"; exit; }
 
-my $pem_out = './t/rsakey.t.pem';
-my $der_out = './t/rsakey.t.der';
+my $pem_out = './t/data/rsakey.t.pem';
+my $der_out = './t/data/rsakey.t.der';
 my $md5hash = '45f605c6186eaea0730958b0e3da52e4';
 
 #### test optional ASN parameters

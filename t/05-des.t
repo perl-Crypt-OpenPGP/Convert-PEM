@@ -11,8 +11,10 @@ my $pem = get_rsa();
 my @modules = ("Crypt::DES");
 
 my @tests = (
-	{ name => "DES-CBC", rx => "t/rsakey-des.pem", tx => "t/rsakey-des.wr.pem", hash => "45f605c6186eaea0730958b0e3da52e4", },
-	{ name => "DES-CBC", rx => "t/rsakey2-des.pem", tx => "t/rsakey2-des.wr.pem", hash => "9b334c60a2c0c2a543ac742ebf1f8ccd", },
+	{ name => "DES-CBC", rx => "t/data/rsakey-des.pem",
+        tx => "t/data/rsakey-des.wr.pem", hash => "45f605c6186eaea0730958b0e3da52e4", },
+	{ name => "DES-CBC", rx => "t/data/rsakey2-des.pem",
+        tx => "t/data/rsakey2-des.wr.pem", hash => "9b334c60a2c0c2a543ac742ebf1f8ccd", },
 );
 
 run_tests($pem,\@modules,\@tests);

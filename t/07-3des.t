@@ -11,8 +11,10 @@ my $pem = get_rsa();
 my @modules = ("Crypt::DES_EDE3");
 
 my @tests = (
-	{ name => "DES-EDE3-CBC", rx => "t/rsakey-3des.pem", tx => "t/rsakey-3des.wr.pem", hash => "45f605c6186eaea0730958b0e3da52e4", },
-	{ name => "DES-EDE3-CBC", rx => "t/rsakey2-3des.pem", tx => "t/rsakey2-3des.wr.pem", hash => "9b334c60a2c0c2a543ac742ebf1f8ccd", },
+	{ name => "DES-EDE3-CBC", rx => "t/data/rsakey-3des.pem",
+        tx => "t/data/rsakey-3des.wr.pem", hash => "45f605c6186eaea0730958b0e3da52e4", },
+	{ name => "DES-EDE3-CBC", rx => "t/data/rsakey2-3des.pem",
+        tx => "t/data/rsakey2-3des.wr.pem", hash => "9b334c60a2c0c2a543ac742ebf1f8ccd", },
 );
 
 run_tests($pem,\@modules,\@tests);
