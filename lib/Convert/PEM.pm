@@ -9,6 +9,8 @@ use Digest::MD5 qw( md5 );
 use Convert::ASN1;
 use Carp qw( croak );
 use Convert::PEM::CBC;
+use Crypt::PRNG qw( random_bytes );
+
 
 use vars qw( $VERSION $DefaultCipher );
 # VERSION
@@ -381,7 +383,7 @@ sub _getiv {
             return $pem->error("Provided IV must be in hex format");
         }
     }
-    $iv = pack("C*", map { rand 255 } 1..$p{bs});
+    $iv = random_bytes($p{bs});
     croak "Internal error: unexpected IV length" if length($iv) != $p{bs};
     $iv;
 }

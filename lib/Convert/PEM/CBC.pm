@@ -5,6 +5,8 @@ use strict;
 use Carp qw( croak );
 use Digest::MD5 qw( md5 );
 use base qw( Class::ErrorHandler );
+use Crypt::PRNG qw( random_bytes );
+
 
 sub new {
     my $class = shift;
@@ -15,8 +17,7 @@ sub new {
 sub init {
     my $cbc = shift;
     my %param = @_;
-    $cbc->{iv} = exists $param{IV} ? $param{IV} :
-        pack("C*", map { rand 255 } 1..8);
+    $cbc->{iv} = exists $param{IV} ? $param{IV} : random_bytes(8);
     croak "init: Cipher is required"
         unless my $cipher = $param{Cipher};
     if (ref($cipher)) {
