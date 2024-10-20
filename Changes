@@ -1,6 +1,10 @@
 Revision history for Convert::PEM
 
 {{$NEXT}}
+
+0.10 -- Sun Oct 20 11:57:20 ADT 2024
+
+    - Merge PR#1 from @jeremy-church to add extra cipher support
     - Add DES support
     - Add AES 128/192/256 support
     - Add IDEA support
@@ -15,6 +19,19 @@ Revision history for Convert::PEM
     - Add DER support and documentation
     - Add other access methods to documentation
     - Additional encode/decode testing with DER
+
+    [Detailed Changes]
+    - c4128fd no need to use eval for blocksize call
+    - 0cdf983 Remove execution attributes on test files
+    - aa16478 Move the pem and der files to a sub directory
+    - e7b4d1a Fix spelling typos
+    - f047d32 rand is not secure for crypto operations
+    - 3e2847b DES and IDEA are deprecated in OpenSSL versions
+    - bd40886 Replace tabs with spaces
+    - 7971073 Added changes
+    - 53a3142 Additional documentation and make ASN optional.
+    - 879b190 Add support for additional ciphers.
+    - 6c68073 typo fix
 
 0.09 -- Tue Oct 15 22:59:26 ADT 2024
     - 55f01eb Bump Repo Version
