@@ -103,6 +103,7 @@ sub run_tests
 			# openssl tests
 			if ($ossl) {
  				SKIP: {
+ 					skip("Author Tests only for openssl test", 1) if !$ENV{AUTHOR_TESTING};
  					skip("No support for IDEA-CBC", 1) if (`openssl enc -ciphers` !~ /idea-cbc/m) && ($t->{tx} =~ /idea/);
   					skip("No support for DES", 1) 
   						if (`openssl enc -ciphers` !~ /des-cbc/m) || (($t->{tx} =~ /des.wr.pem/) && ($ossl_ver =~ /OpenSSL 3/));
