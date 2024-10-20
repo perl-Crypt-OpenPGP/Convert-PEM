@@ -46,7 +46,7 @@ sub encrypt {
     my $cipher = $cbc->{cipher};
     ## special stuff for the old SEED package
     my $seed = ref($cipher) eq "Crypt::SEED";
-    my $bs = ($seed ? 16 : eval '$cipher->blocksize')
+    my $bs = ($seed ? 16 : $cipher->blocksize())
         or return $cbc->error("This cipher does not support the blocksize method");
     my @blocks = $text =~ /(.{1,$bs})/gs;
     my $last = pop @blocks if length($blocks[-1]) < $bs;
@@ -75,7 +75,7 @@ sub decrypt {
     my $cipher = $cbc->{cipher};
     ## special stuff for the old SEED package
     my $seed = ref($cipher) eq "Crypt::SEED";
-    my $bs = ($seed ? 16 : eval '$cipher->blocksize')
+    my $bs = ($seed ? 16 : $cipher->blocksize())
         or return $cbc->error("This cipher does not support the blocksize method");
     my @blocks = $text =~ /(.{1,$bs})/gs;
     my $last = length($blocks[-1]) < $bs ?
