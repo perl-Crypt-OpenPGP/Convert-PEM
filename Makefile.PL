@@ -18,6 +18,7 @@ my %WriteMakefileArgs = (
     "Class::ErrorHandler" => 0,
     "Convert::ASN1" => "0.34",
     "Crypt::DES_EDE3" => 0,
+    "Crypt::PRNG" => 0,
     "Digest::MD5" => 0,
     "MIME::Base64" => 0
   },
@@ -25,7 +26,7 @@ my %WriteMakefileArgs = (
     "Test::Exception" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.09",
+  "VERSION" => "0.10",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -36,6 +37,7 @@ my %FallbackPrereqs = (
   "Class::ErrorHandler" => 0,
   "Convert::ASN1" => "0.34",
   "Crypt::DES_EDE3" => 0,
+  "Crypt::PRNG" => 0,
   "Digest::MD5" => 0,
   "MIME::Base64" => 0,
   "Test::Exception" => 0,
