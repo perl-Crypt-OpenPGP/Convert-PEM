@@ -2,6 +2,19 @@ Revision history for Convert::PEM
 
 {{$NEXT}}
 
+0.12 -- Mon Oct 21 22:46:47 ADT 2024
+
+    [Changes Since 0.09]
+    - Release 0.11-TRIAL as 0.12 
+    - Added extra cipher support from @jeremy-church - see release 0.10
+    - Miscellaneous cleanups
+
+    [Detailed Changes]
+    - ae82ce2 v0.11
+    - 43861a2 Bump repo version
+    - 4e8c59d openssl version differences - only test in author testing
+    - 9b3e183 v0.10
+
 0.11 -- Sun Oct 20 20:35:17 ADT 2024
 
     [Changes Since 0.08]
