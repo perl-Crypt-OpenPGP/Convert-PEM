@@ -361,7 +361,7 @@ sub encrypt {
     my $cbc = Convert::PEM::CBC->new(
                     IV            =>    $iv,
                     Cipher        =>    $cm->new($key) );
-    my $iv = uc join '', unpack "H*", $cbc->iv;
+    $iv = uc join '', unpack "H*", $cbc->iv;
     my $buf = $cbc->encrypt($param{Plaintext}) or
         return $pem->error("Encryption failed: " . $cbc->errstr);
     ($buf, "$ctype,$iv");
