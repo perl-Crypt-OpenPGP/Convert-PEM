@@ -50,11 +50,11 @@ sub _getform {
     my $pem = shift;
     my %param = @_;
 
-    my $in = uc($param{InForm}) || 'PEM';
+    my $in = uc($param{InForm} || 'PEM');
     $in =~ m/^(PEM|DER)$/ or return $pem->error("Invalid InForm '$in': must be PEM or DER");
     $pem->{InForm} = $in;
 
-    my $out = uc($param{OutForm}) || 'PEM';
+    my $out = uc($param{OutForm} || 'PEM');
     $out =~ m/^(PEM|DER)$/ or return $pem->error("Invalid OutForm '$out': must be PEM or DER");
     $pem->{OutForm} = $out;
     $pem;
