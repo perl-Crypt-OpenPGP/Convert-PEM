@@ -154,8 +154,8 @@ sub decode {
                               Password   => $param{Password} )
             or return;
     }
-
-    my $obj = $pem->from_der( DER => $buf )
+    $param{DER} = $buf;
+    my $obj = $pem->from_der( %param )
         or return;
 
     $obj;
